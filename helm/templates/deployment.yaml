@@ -1,0 +1,168 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "service.fullname" . }}
+  namespace: {{ include "service.namespace" . }}
+  labels:
+    {{- include "service.labels" . | nindent 4 }}
+    service.tier: {{TIER}}
+    service.workload: {{TIER}}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ .Values.service.name }}
+      app.kubernetes.io/instance: {{ .Values.service.name }}
+  template:
+    metadata:
+      annotations:
+        {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- with .Values.annotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      labels:
+        {{- include "service.selectorLabels" . | nindent 8 }}
+        service.tier: {{TIER}}
+        service.workload: {{TIER}}
+        {{- with .Values.labels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "service.fullname" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        # Main infrastructure service container
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: main
+              containerPort: {{ .Values.service.targetPort }}
+              protocol: TCP
+          livenessProbe:
+            {{- toYaml .Values.probes.liveness | nindent 12 }}
+          readinessProbe:
+            {{- toYaml .Values.probes.readiness | nindent 12 }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          env:
+            - name: ENVIRONMENT
+              value: {{ .Values.env | quote }}
+            - name: APP_NAME
+              value: {{ include "service.fullname" . }}
+            - name: SERVICE_NAME
+              value: {{SERVICE_NAME}}
+            - name: SERVICE_TIER
+              value: {{TIER}}
+            - name: SERVICE_WORKLOAD
+              value: {{TIER}}
+            - name: DNS_DOMAINS
+              value: "{{DNS_DOMAINS}}"
+          envFrom:
+            {{- if .Values.secrets.enabled }}
+            # Load service secrets as environment variables
+            - secretRef:
+                name: {{ include "service.fullname" . }}-secrets
+            {{- end }}
+            {{- if .Values.dependencies }}
+            # Load service dependencies as environment variables
+            - configMapRef:
+                name: {{ include "service.fullname" . }}-deps
+            {{- end }}
+          volumeMounts:
+            {{- if .Values.secrets.enabled }}
+            - name: secrets
+              mountPath: /app/secrets
+              readOnly: true
+            {{- end }}
+            {{- if .Values.persistence.enabled }}
+            - name: data-storage
+              mountPath: {{ .Values.infrastructure.dataDir }}
+            {{- end }}
+        
+        # Galaxy sidecar container for standardized endpoints
+        {{- if .Values.galaxy.sidecar.enabled }}
+        - name: galaxy-sidecar
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.galaxy.sidecar.image.repository }}:{{ .Values.galaxy.sidecar.image.tag }}"
+          imagePullPolicy: {{ .Values.galaxy.sidecar.image.pullPolicy }}
+          ports:
+            - name: galaxy-http
+              containerPort: 3000
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: galaxy-http
+            initialDelaySeconds: 15
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: galaxy-http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            {{- toYaml .Values.galaxy.sidecar.resources | nindent 12 }}
+          env:
+            - name: GALAXY_SERVICE_NAME
+              value: {{SERVICE_NAME}}
+            - name: GALAXY_SERVICE_TIER
+              value: {{TIER}}
+            - name: GALAXY_SERVICE_TEAM
+              value: {{TEAM}}
+            - name: GALAXY_SERVICE_DESCRIPTION
+              value: {{DESCRIPTION}}
+            - name: INFRA_SERVICE_HOST
+              value: "localhost"
+            - name: INFRA_SERVICE_PORT
+              value: "{{ .Values.service.targetPort }}"
+            - name: INFRA_SERVICE_TYPE
+              value: "{{ .Values.infrastructure.type | default "generic" }}"
+            {{- if eq (.Values.infrastructure.type | default "generic") "postgres" }}
+            - name: POSTGRES_USER
+              value: {{ .Values.infrastructure.postgres.user | default "postgres" | quote }}
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "service.fullname" . }}-secrets
+                  key: password
+            - name: POSTGRES_DB
+              value: {{ .Values.infrastructure.postgres.database | default "postgres" | quote }}
+            {{- end }}
+        {{- end }}
+      volumes:
+        {{- if .Values.secrets.enabled }}
+        - name: secrets
+          secret:
+            secretName: {{ include "service.fullname" . }}-secrets
+        {{- end }}
+        {{- if .Values.persistence.enabled }}
+        - name: data-storage
+          persistentVolumeClaim:
+            claimName: {{ include "service.fullname" . }}-data
+        {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

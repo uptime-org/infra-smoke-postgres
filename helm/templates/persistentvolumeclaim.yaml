@@ -1,0 +1,28 @@
+{{- if .Values.persistence.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "service.fullname" . }}-data
+  namespace: {{ include "service.namespace" . }}
+  labels:
+    {{- include "service.labels" . | nindent 4 }}
+    service.tier: {{TIER}}
+    service.workload: {{TIER}}
+  {{- with .Values.persistence.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  accessModes:
+    - {{ .Values.persistence.accessMode | quote }}
+  resources:
+    requests:
+      storage: {{ .Values.persistence.size | quote }}
+  {{- if .Values.persistence.storageClassName }}
+  {{- if (eq "-" .Values.persistence.storageClassName) }}
+  storageClassName: ""
+  {{- else }}
+  storageClassName: "{{ .Values.persistence.storageClassName }}"
+  {{- end }}
+  {{- end }}
+{{- end }}

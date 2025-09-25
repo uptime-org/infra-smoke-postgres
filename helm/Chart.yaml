@@ -1,0 +1,22 @@
+apiVersion: v2
+name: {{SERVICE_NAME}}
+description: {{DESCRIPTION}}
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+keywords:
+  - {{TIER}}
+  - {{TIER}}
+  - infrastructure
+  - blockchain
+  - validator
+  - galaxy
+home: https://github.com/{{GITHUB_ORG}}
+sources:
+  - https://github.com/{{GITHUB_ORG}}
+maintainers:
+  - name: {{TEAM}}
+    email: shawn.p.meredith@gmail.com
+annotations:
+  category: {{TIER}}
+  tier: {{TIER}}

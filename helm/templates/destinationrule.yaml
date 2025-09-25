@@ -1,0 +1,17 @@
+{{- if .Values.istio.destinationRule.enabled -}}
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: {{ include "service.fullname" . }}
+  namespace: {{ include "service.namespace" . }}
+  labels:
+    {{- include "service.labels" . | nindent 4 }}
+    service.tier: {{TIER}}
+    service.workload: {{TIER}}
+spec:
+  host: {{ include "service.fullname" . }}
+  {{- with .Values.istio.destinationRule.trafficPolicy }}
+  trafficPolicy:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+{{- end }}

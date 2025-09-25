@@ -1,0 +1,29 @@
+{{- if .Values.istio.virtualService.enabled -}}
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: {{ include "service.fullname" . }}
+  namespace: {{ include "service.namespace" . }}
+  labels:
+    {{- include "service.labels" . | nindent 4 }}
+    service.tier: {{TIER}}
+    service.workload: {{TIER}}
+  annotations:
+    external-dns.alpha.kubernetes.io/hostname: {{ include "service.hostnames" . }}
+spec:
+  hosts:
+  {{- range .Values.dns.domains }}
+    - {{ . }}.{{ $.Values.global.domain }}
+  {{- end }}
+  gateways:
+    - {{ .Values.istio.virtualService.gatewayName }}
+  http:
+    - match:
+        - uri:
+            prefix: /
+      route:
+        - destination:
+            host: {{ include "service.fullname" . }}
+            port:
+              number: {{ .Values.service.port }}
+{{- end }}

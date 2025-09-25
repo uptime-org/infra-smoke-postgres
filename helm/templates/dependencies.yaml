@@ -1,0 +1,27 @@
+{{- if .Values.dependencies }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "service.fullname" . }}-deps
+  namespace: {{ include "service.namespace" . }}
+  labels:
+    {{- include "service.labels" . | nindent 4 }}
+    galaxy.io/config-type: dependencies
+data:
+  # Galaxy dependency service names array
+  GALAXY_DEPS: "{{- range $i, $dep := .Values.dependencies }}{{- if $i }},{{- end }}{{ $dep.name }}{{- end }}"
+  # Environment domain for URL construction
+  GALAXY_DOMAIN: {{ .Values.global.domain | default "" | quote }}
+  {{- range $dep := .Values.dependencies }}
+  {{- $serviceName := $dep.name }}
+  {{- $upperName := upper (replace "-" "_" $serviceName) }}
+  # Dependency: {{ $serviceName }}
+  {{ $upperName }}_SERVICE_URL: {{ $dep.url | quote }}
+  {{- if $dep.host }}
+  {{ $upperName }}_SERVICE_HOST: {{ $dep.host | quote }}
+  {{- end }}
+  {{- if $dep.port }}
+  {{ $upperName }}_SERVICE_PORT: {{ $dep.port | quote }}
+  {{- end }}
+  {{- end }}
+{{- end }}

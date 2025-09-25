@@ -1,0 +1,31 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "service.fullname" . }}
+  namespace: {{ include "service.namespace" . }}
+  labels:
+    {{- include "service.labels" . | nindent 4 }}
+    service.tier: {{TIER}}
+    service.workload: {{TIER}}
+  annotations:
+    {{- with .Values.service.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    # Main infrastructure service port
+    - port: {{ .Values.service.port }}
+      targetPort: {{ .Values.service.targetPort }}
+      protocol: TCP
+      name: main
+    # Galaxy sidecar port for standardized endpoints
+    {{- if .Values.galaxy.sidecar.enabled }}
+    - port: 3000
+      targetPort: 3000
+      protocol: TCP
+      name: galaxy-http
+    {{- end }}
+  selector:
+    app.kubernetes.io/name: {{ .Values.service.name }}
+    app.kubernetes.io/instance: {{ .Values.service.name }}

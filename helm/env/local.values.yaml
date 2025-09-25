@@ -1,0 +1,48 @@
+# Local development environment values
+env: "local"
+
+# Global domain for ingress (templated from environment config)
+global:
+  environment: local
+  domain: {{LOCAL_DOMAIN}}
+
+# Single replica for local dev
+replicaCount: 1
+
+# Image pull policy for local dev (Never = use local Docker images)
+image:
+  pullPolicy: Never
+
+# Resource configuration (minimal for local)
+resources:
+  limits:
+    cpu: 100m
+    memory: 128Mi
+  requests:
+    cpu: 50m
+    memory: 64Mi
+
+# Autoscaling disabled for local
+autoscaling:
+  enabled: false
+
+# Ingress disabled for local (use services + port-forward)
+ingress:
+  enabled: false
+  className: "nginx"
+
+# Istio disabled for local
+istio:
+  enabled: false
+
+# Pod disruption budget disabled for local
+podDisruptionBudget:
+  enabled: false
+
+# Service type NodePort for local access
+service:
+  type: ClusterIP
+
+# Local dependency overrides - only infra services need east-west discovery
+# App/UI services use base templated URLs even in local
+# Template will populate with infra service overrides for east-west communication

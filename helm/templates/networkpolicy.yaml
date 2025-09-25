@@ -1,0 +1,130 @@
+{{- if .Values.networkPolicy.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "service.fullname" . }}-netpol
+  labels:
+    {{- include "service.labels" . | nindent 4 }}
+  namespace: {{ .Values.global.namespace | default .Release.Namespace }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "service.selectorLabels" . | nindent 6 }}
+  policyTypes:
+  - Ingress
+  - Egress
+  
+  ingress:
+  # Allow ingress from services that depend on this infrastructure service
+  {{- if .Values.networkPolicy.allowIngressFrom }}
+  {{- range .Values.networkPolicy.allowIngressFrom }}
+  - from:
+    - podSelector:
+        matchLabels:
+          app.kubernetes.io/name: {{ .service }}
+    ports:
+    - protocol: TCP
+      port: {{ $.Values.service.targetPort }}
+  {{- end }}
+  {{- end }}
+  
+  # Allow ingress from same namespace (for service discovery and health checks)
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: {{ .Values.global.namespace | default .Release.Namespace }}
+    ports:
+    - protocol: TCP
+      port: {{ .Values.service.targetPort }}
+  
+  {{- if .Values.galaxy.sidecar.enabled }}
+  # Allow ingress to sidecar port for Galaxy endpoints
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: {{ .Values.global.namespace | default .Release.Namespace }}
+    ports:
+    - protocol: TCP
+      port: 3000  # Galaxy sidecar port
+  {{- end }}
+
+  egress:
+  # Infrastructure services typically don't need external egress
+  # but may need DNS resolution
+  - to: []
+    ports:
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 53
+  
+  # Allow egress for package installation during init (if needed)
+  {{- if .Values.networkPolicy.allowExternalEgress }}
+  - to: []
+    ports:
+    - protocol: TCP
+      port: 80
+    - protocol: TCP
+      port: 443
+  {{- end }}
+  
+  # Allow health check endpoints
+  - to:
+    - podSelector: {}
+    ports:
+    - protocol: TCP
+      port: {{ .Values.service.targetPort }}
+    {{- if .Values.galaxy.sidecar.enabled }}
+    - protocol: TCP
+      port: 3000
+    {{- end }}
+
+---
+{{- if .Values.galaxy.sidecar.enabled }}
+# Separate NetworkPolicy for Galaxy sidecar
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "service.fullname" . }}-sidecar-netpol
+  labels:
+    {{- include "service.labels" . | nindent 4 }}
+    component: sidecar
+  namespace: {{ .Values.global.namespace | default .Release.Namespace }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "service.selectorLabels" . | nindent 6 }}
+      component: sidecar
+  policyTypes:
+  - Ingress
+  - Egress
+  
+  ingress:
+  # Allow ingress from Galaxy management tools and monitoring
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: {{ .Values.global.namespace | default .Release.Namespace }}
+    ports:
+    - protocol: TCP
+      port: 3000
+  
+  egress:
+  # Sidecar can communicate with main infrastructure service
+  - to:
+    - podSelector:
+        matchLabels:
+          {{- include "service.selectorLabels" . | nindent 10 }}
+    ports:
+    - protocol: TCP
+      port: {{ .Values.service.targetPort }}
+  
+  # DNS resolution
+  - to: []
+    ports:
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 53
+{{- end }}
+{{- end }}
