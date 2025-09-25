@@ -7,8 +7,8 @@ metadata:
   labels:
     app.kubernetes.io/name: {{ .Values.service.name }}
     app.kubernetes.io/instance: {{ .Values.service.name }}
-    app.kubernetes.io/environment: {{ .Values.env }}
-    galaxy.io/env: {{ .Values.env }}
+    app.kubernetes.io/environment: {{ .Values.eco.namespace }}
+    galaxy.io/env: {{ .Values.eco.namespace }}
 spec:
   scaleTargetRef:
     apiVersion: apps/v1

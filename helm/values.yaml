@@ -20,12 +20,17 @@ dns:
   domains:
     - "db"
 
+# Eco configuration
+eco:
+  name: "gx-smoke"
+  namespace: "{{ECO_NAMESPACE}}"
+
 # Global configurations
 global:
   imageRegistry: "ghcr.io"
   imagePullSecrets: []
   ecoName: "gx-smoke"
-  namespace: "gx-smoke"
+  namespace: "{{ECO_NAMESPACE}}"
   # Domains come from service configuration
   domains:
     - "db"
