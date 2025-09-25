@@ -5,8 +5,8 @@ metadata:
   namespace: {{ include "service.namespace" . }}
   labels:
     {{- include "service.labels" . | nindent 4 }}
-    service.tier: {{TIER}}
-    service.workload: {{TIER}}
+    service.tier: infra
+    service.workload: infra
 spec:
   {{- if not .Values.autoscaling.enabled }}
   replicas: {{ .Values.replicaCount }}
@@ -26,8 +26,8 @@ spec:
         {{- end }}
       labels:
         {{- include "service.selectorLabels" . | nindent 8 }}
-        service.tier: {{TIER}}
-        service.workload: {{TIER}}
+        service.tier: infra
+        service.workload: infra
         {{- with .Values.labels }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
@@ -62,13 +62,13 @@ spec:
             - name: APP_NAME
               value: {{ include "service.fullname" . }}
             - name: SERVICE_NAME
-              value: {{SERVICE_NAME}}
+              value: infra-smoke-postgres
             - name: SERVICE_TIER
-              value: {{TIER}}
+              value: infra
             - name: SERVICE_WORKLOAD
-              value: {{TIER}}
+              value: infra
             - name: DNS_DOMAINS
-              value: "{{DNS_DOMAINS}}"
+              value: "    - "db""
           envFrom:
             {{- if .Values.secrets.enabled }}
             # Load service secrets as environment variables
@@ -118,13 +118,13 @@ spec:
             {{- toYaml .Values.galaxy.sidecar.resources | nindent 12 }}
           env:
             - name: GALAXY_SERVICE_NAME
-              value: {{SERVICE_NAME}}
+              value: infra-smoke-postgres
             - name: GALAXY_SERVICE_TIER
-              value: {{TIER}}
+              value: infra
             - name: GALAXY_SERVICE_TEAM
-              value: {{TEAM}}
+              value: team3
             - name: GALAXY_SERVICE_DESCRIPTION
-              value: {{DESCRIPTION}}
+              value: PostgreSQL database for smoke tests
             - name: INFRA_SERVICE_HOST
               value: "localhost"
             - name: INFRA_SERVICE_PORT

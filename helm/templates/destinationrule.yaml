@@ -6,8 +6,8 @@ metadata:
   namespace: {{ include "service.namespace" . }}
   labels:
     {{- include "service.labels" . | nindent 4 }}
-    service.tier: {{TIER}}
-    service.workload: {{TIER}}
+    service.tier: infra
+    service.workload: infra
 spec:
   host: {{ include "service.fullname" . }}
   {{- with .Values.istio.destinationRule.trafficPolicy }}

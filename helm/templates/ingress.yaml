@@ -9,8 +9,8 @@ metadata:
   namespace: {{ include "service.namespace" . }}
   labels:
     {{- include "service.labels" . | nindent 4 }}
-    service.tier: {{TIER}}
-    service.workload: {{TIER}}
+    service.tier: infra
+    service.workload: infra
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-prod
     nginx.ingress.kubernetes.io/ssl-redirect: "true"

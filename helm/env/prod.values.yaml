@@ -1,43 +1,43 @@
 # Local development environment values
-env: "local"
+env: "prod"
 
 # Global domain for ingress (templated from environment config)
 global:
-  environment: local
-  domain: localhost
+  environment: prod
+  domain: gx-smoke.com
 
 # Single replica for local dev
-replicaCount: 1
+replicaCount: 3
 
 # Image pull policy for local dev (Never = use local Docker images)
 image:
-  pullPolicy: Never
+  pullPolicy: IfNotPresent
 
 # Resource configuration (minimal for local)
 resources:
   limits:
-    cpu: 100m
-    memory: 128Mi
+    cpu: 1000m
+    memory: 1Gi
   requests:
     cpu: 50m
     memory: 64Mi
 
 # Autoscaling disabled for local
 autoscaling:
-  enabled: false
+  enabled: true
 
 # Ingress disabled for local (use services + port-forward)
 ingress:
-  enabled: false
+  enabled: true
   className: "nginx"
 
 # Istio disabled for local
 istio:
-  enabled: false
+  enabled: true
 
 # Pod disruption budget disabled for local
 podDisruptionBudget:
-  enabled: false
+  enabled: true
 
 # Service type NodePort for local access
 service:
