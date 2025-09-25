@@ -23,14 +23,14 @@ dns:
 # Eco configuration
 eco:
   name: "gx-smoke"
-  namespace: "{{ECO_NAMESPACE}}"
+  namespace: "gx-smoke"
 
 # Global configurations
 global:
   imageRegistry: "ghcr.io"
   imagePullSecrets: []
   ecoName: "gx-smoke"
-  namespace: "{{ECO_NAMESPACE}}"
+  namespace: "gx-smoke"
   # Domains come from service configuration
   domains:
     - "db"
