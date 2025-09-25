@@ -1,0 +1,7 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Base Kustomize configuration
+resources:
+  # Base resources would be defined here
+  # For now, this is a placeholder base that allows overlays to work

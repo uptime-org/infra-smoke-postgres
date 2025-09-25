@@ -58,7 +58,7 @@ spec:
             {{- toYaml .Values.resources | nindent 12 }}
           env:
             - name: ENVIRONMENT
-              value: {{ .Values.env | quote }}
+              value: {{ .Values.global.environment | default "development" | quote }}
             - name: APP_NAME
               value: {{ include "service.fullname" . }}
             - name: SERVICE_NAME
@@ -68,7 +68,7 @@ spec:
             - name: SERVICE_WORKLOAD
               value: infra
             - name: DNS_DOMAINS
-              value: "    - "db""
+              value: {{ .Values.dns.domains | join "," | quote }}
           envFrom:
             {{- if .Values.secrets.enabled }}
             # Load service secrets as environment variables

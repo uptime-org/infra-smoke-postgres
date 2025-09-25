@@ -201,7 +201,7 @@ secrets:
 
 # Network policies for service isolation and security
 networkPolicy:
-  enabled: true
+  enabled: false
   allowExternalEgress: true  # Allow internet for package installs
   # Auto-populated from services that depend on this infrastructure
   allowIngressFrom: []
