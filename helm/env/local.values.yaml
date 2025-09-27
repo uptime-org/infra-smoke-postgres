@@ -11,7 +11,16 @@ replicaCount: 1
 
 # Image pull policy for local dev (Never = use local Docker images)
 image:
+  repository: infra-smoke-postgres
   pullPolicy: Never
+  tag: latest
+
+# Sidecar image configuration
+sidecar:
+  image:
+    repository: infra-smoke-postgres-sidecar
+    pullPolicy: Never
+    tag: latest
 
 # Resource configuration (minimal for local)
 resources:
@@ -42,6 +51,10 @@ podDisruptionBudget:
 # Service type NodePort for local access
 service:
   type: ClusterIP
+
+# Enable secrets for local development
+secrets:
+  enabled: true
 
 # Local dependency overrides - only infra services need east-west discovery
 # App/UI services use base templated URLs even in local

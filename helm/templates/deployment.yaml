@@ -96,8 +96,8 @@ spec:
         - name: galaxy-sidecar
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
-          image: "{{ .Values.galaxy.sidecar.image.repository }}:{{ .Values.galaxy.sidecar.image.tag }}"
-          imagePullPolicy: {{ .Values.galaxy.sidecar.image.pullPolicy }}
+          image: "{{ .Values.sidecar.image.repository | default .Values.galaxy.sidecar.image.repository }}:{{ .Values.sidecar.image.tag | default .Values.galaxy.sidecar.image.tag }}"
+          imagePullPolicy: {{ .Values.sidecar.image.pullPolicy | default .Values.galaxy.sidecar.image.pullPolicy }}
           ports:
             - name: galaxy-http
               containerPort: 3000
@@ -138,7 +138,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: {{ include "service.fullname" . }}-secrets
-                  key: password
+                  key: postgres_password
             - name: POSTGRES_DB
               value: {{ .Values.infrastructure.postgres.database | default "postgres" | quote }}
             {{- end }}

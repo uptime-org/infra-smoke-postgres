@@ -119,6 +119,42 @@ else
     exit 1
 fi
 
+# Check for and build sidecar if it exists
+if [[ -d "sidecar" ]] && [[ -f "sidecar/Dockerfile" ]]; then
+    info "🔍 Detected sidecar directory, building sidecar image..."
+    SIDECAR_IMAGE_NAME="${SERVICE_NAME}-sidecar"
+    if [[ "$LOAD_K8S" == "true" ]]; then
+        SIDECAR_FULL_IMAGE="${SIDECAR_IMAGE_NAME}:${TAG}"
+    else
+        SIDECAR_FULL_IMAGE="${REGISTRY}/${ORG}/${SIDECAR_IMAGE_NAME}:${TAG}"
+    fi
+    
+    info "🏷️  Sidecar Image: ${SIDECAR_FULL_IMAGE}"
+    
+    if docker build -t "${SIDECAR_FULL_IMAGE}" sidecar/; then
+        success "Sidecar Docker image built successfully"
+        
+        # Load sidecar into local Kubernetes if requested
+        if [[ "$LOAD_K8S" == "true" ]]; then
+            info "📦 Sidecar image available in Docker Desktop Kubernetes"
+        fi
+        
+        # Push sidecar to registry if requested
+        if [[ "$PUSH" == "true" ]]; then
+            info "📤 Pushing sidecar to registry..."
+            if docker push "${SIDECAR_FULL_IMAGE}"; then
+                success "Sidecar image pushed successfully"
+            else
+                error "Sidecar push failed"
+                exit 1
+            fi
+        fi
+    else
+        error "Sidecar Docker build failed"
+        exit 1
+    fi
+fi
+
 # Load into local Kubernetes if requested
 if [[ "$LOAD_K8S" == "true" ]]; then
     info "📦 Loading image into local Kubernetes..."
